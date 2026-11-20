@@ -190,7 +190,7 @@ def library_run(body: dict) -> dict:
     experiment = body["experiment"]
     config = libraries.get(experiment)
     if not (config and config.get("enabled")):
-        raise ValueError("Turn on the library analysis and describe the library first (card 4 on the left)")
+        raise ValueError("Turn on the library analysis and describe the library first (card 3 on the left)")
     if not (run_dir / experiment / "summary.csv").exists():
         raise ValueError("The library analysis needs a finished run")
     return jobs.start({"kind": "library", "experiment": experiment, "run_dir": str(run_dir), "library": config}, {})

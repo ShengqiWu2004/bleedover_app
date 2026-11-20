@@ -18,10 +18,10 @@ Share `packaging/dist/BleedoverCorrector-arm64.dmg` (~105 MB). The person
 receiving it:
 
 1. Opens the `.dmg` and drags **Bleedover Corrector** to Applications.
-2. Opens it the first time with **right-click → Open**, then **Open** again.
-   The app isn't signed with an Apple developer ID, so a plain double-click is
-   blocked once. On recent macOS, use *System Settings → Privacy & Security →
-   Open Anyway*.
+2. Allows it once. The app isn't signed with an Apple developer ID, so macOS
+   blocks the first launch. Go to *System Settings → Privacy & Security* and
+   click *Open Anyway*. On macOS 14 and older, *right-click → Open* also
+   works.
 3. Waits up to a minute on that first launch while macOS checks the app. Later
    launches take about 2 s.
 
@@ -47,6 +47,13 @@ pip install numpy==2.3.0 pandas==2.2.3 scipy==1.15.3 pyarrow==20.0.0 matplotlib=
 bash bleedover_app/packaging/build_standalone_macos.sh --install
 ```
 
+**Publish it.** The download link in the repo's top-level README always fetches
+the `.dmg` attached to the newest GitHub Release. On GitHub, go to *Releases →
+Draft a new release*. Make a tag (e.g. `app-v1.1`), drag in
+`packaging/dist/BleedoverCorrector-arm64.dmg` and publish. Keep the file name
+unchanged, or the link breaks. The `.dmg` can't be committed: it's over
+GitHub's 100 MB file limit.
+
 The app is built in `packaging/build.noindex/`, a folder Spotlight and Launchpad
 skip, so only the copy in `~/Applications` shows up as an app. `packaging/dist/`
 holds the `.dmg` to share.
@@ -64,7 +71,8 @@ cd imager_bleedover
 python -m bleedover_app            # opens its own window (Chrome/Edge app mode, else the default browser)
 ```
 
-No extra packages are needed: the server uses the Python standard library.
+No packages beyond `mapa`'s are needed. The server uses the Python standard library, and `psutil` reads the
+Mac's memory.
 
 - `bash bleedover_app/packaging/build_macos_app.sh` makes a light `.app` that
   runs this repo's code with `mapa`'s Python (no bundling).
@@ -120,16 +128,26 @@ No extra packages are needed: the server uses the Python standard library.
 5. **Progress bar** (bottom): the stage, images done, the last image's R², the
    time left (from observed speed once every worker has finished an image),
    *Cancel*, and the full log.
-6. **Results.** Headline numbers, then four default figures, each with how to
-   read it and what it means biologically:
-   - image R² before and after correction;
-   - Feather vs corrected RFU per cluster;
-   - RFU change by distance to the nearest lit neighbour;
-   - median RFU per sequencing sample, lit vs dark.
+6. **Results.** Only runs of the experiment chosen at the top are listed. That
+   includes script runs, so different versions (model, image model, settings)
+   can be compared. A stats line comes first, then one row of tabs:
+   - **Library**: the library analysis (see below), or how to set it up.
+   - **Image fit**: image R² before and after correction.
+   - **Cluster change**: Feather vs corrected RFU per cluster.
+   - **Crowding**: RFU change by distance to the nearest lit neighbour.
+   - **Samples**: median RFU per sequencing sample, lit vs dark.
+   - **Calibration**: shown if one ran.
+   - **Per cycle**: a table by cycle.
+   - **Not corrected**: shown only if some images failed.
 
-   Also shown: a per-cycle table, the calibration (if one ran), and failed
-   images. Earlier runs, including script runs, can be opened; *Build report*
-   makes a report for runs that have none.
+   Each figure says how to read it and what it means biologically. *Build
+   report* makes a report for runs that have none.
+
+   **Resume.** A stopped run keeps every image it finished. Starting the same
+   method again offers to resume it, and only the remaining images are run.
+
+   **Clean up (🧹).** Lists this experiment's runs: finished in green,
+   incomplete in red. You can delete the incomplete ones, or chosen others.
 7. **Image viewer.** Click anywhere on a tile to see six panels for a
    64/128/256 px window:
    - the real image;
@@ -138,6 +156,8 @@ No extra packages are needed: the server uses the Python standard library.
    - each cluster's change;
    - both residuals.
 
+   It shows the run chosen in Results, including a run that's still going: every
+   image finished so far is listed.
    The crop is re-rendered from the saved tables, so nothing extra is stored.
    It matches `correction.reconstruct_image` to within float32 rounding.
 
@@ -162,11 +182,21 @@ point`), and spread is the normalized SD of each member's replicates (SD ÷
 mean). Only trusted clusters count, and only members with at least *Min
 replicates* of them.
 
-- replicates per member;
-- each member's median signal before vs after, with rank agreement;
-- the distribution of normalized SD before vs after, and its median per cycle;
-- `app_report/library/by_member.feather`: every member × cycle, with replicates,
-  mean, median and normalized SD for both versions.
+The figures are shown for the brightest cycle, as sub-tabs under Results → Library:
+- **Normalized SD**: its distribution over sequences, before vs after.
+- **Each sequence**: every sequence's normalized SD after vs before, and the
+  share that got tighter.
+- **Within sequences**: each cluster ÷ its sequence's mean, pooled.
+- **Base heatmap**: signal by base and position. Shown when all members have
+  the same length.
+- **Sequences**: a searchable, sortable table.
+- **SD by cycle**: median normalized SD per cycle.
+- **Member signal**: each member's median signal before vs after, with rank
+  agreement.
+- **Replicates**: clusters per member.
+
+`app_report/library/by_member.feather` holds every member × cycle, with
+replicates, mean, median and normalized SD for both versions.
 
 ## Where things go
 
@@ -180,7 +210,7 @@ replicates* of them.
 | Your saved calibrations | `~/Library/Application Support/BleedoverCorrector/calibrations.json` |
 | Library set up per experiment | `~/Library/Application Support/BleedoverCorrector/libraries.json` |
 | Library analysis of a run | `<run>/app_report/library/` |
-| Preferences (FASTQ library, last folder, workers) | `~/Library/Application Support/BleedoverCorrector/preferences.json` |
+| Preferences (FASTQ library, last folder, workers, image model, extra run folders) | `~/Library/Application Support/BleedoverCorrector/preferences.json` |
 
 ## Code layout
 
@@ -199,7 +229,7 @@ replicates* of them.
 | `run_index.py` | An experiment's runs, their method, and which can be resumed. |
 | `timing.py` | ETA from past runs, memory per worker, live stage clock. |
 | `jobs.py` | One subprocess job at a time; parses its events into the live state. |
-| `pipeline/` | Runs in the subprocess: `calibrate.py`, `correct.py`, `report.py`, `plots.py`, `events.py`. |
+| `pipeline/` | Runs in the subprocess: `calibrate.py`, `correct.py`, `report.py`, `plots.py`, `events.py`, and the library analysis (`library_report.py`, `library_stats.py`, `library_plots.py`). |
 | `viewer.py` | Re-renders crops of corrected images. |
 | `dialogs.py` | Native folder picker (AppleScript on macOS, tkinter elsewhere). |
 | `static/` | The page: `index.html`, `app.css`, `js/*.js` (ES modules), manifest, service worker, icons. |
@@ -212,7 +242,7 @@ replicates* of them.
 - the ARIA tabs pattern with keyboard support;
 - visible focus, `aria-live` status, and no colour-only meaning (icons + text);
 - light/dark themes from the system, and `prefers-reduced-motion` / forced-colours support;
-- image sizes reserved (no layout shift), lazy-loaded figures, and no framework or CDN;
+- image sizes reserved (no layout shift), each figure loaded only when its tab is opened, and no framework or CDN;
 - a strict Content-Security-Policy;
 - installable as a PWA (manifest + service worker).
 

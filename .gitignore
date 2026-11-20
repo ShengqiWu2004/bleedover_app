@@ -1,22 +1,6 @@
-# Python
+# The repo's top-level .gitignore skips *.md and *.png; the app needs its docs and icons, so keep them here.
+!*.md
+!static/icons/*.png
+
 __pycache__/
-*.py[cod]
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# macOS and editor files
 .DS_Store
-
-# Build and packaging artifacts
-build/
-dist/
-*.app/
-*.dmg
-packaging/build.noindex/
