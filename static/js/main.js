@@ -38,6 +38,8 @@ async function main() {
   });
   $("help").addEventListener("click", () => $("help-dialog").showModal());
   $("help-close").addEventListener("click", () => $("help-dialog").close());
+  for (const b of document.querySelectorAll("[data-opens]")) b.addEventListener("click", () => $(b.dataset.opens).showModal());
+  for (const b of document.querySelectorAll("[data-closes]")) b.addEventListener("click", () => b.closest("dialog").close());
   installPrompt();
 }
 

@@ -16,7 +16,6 @@ export function initRunConfig(prefs, machineInfo) {
     radio.checked = radio.value === (prefs.renderer || "voronoi");
     radio.addEventListener("change", update);
   }
-  if (prefs.workers) $("workers").value = prefs.workers;
   $("model").addEventListener("change", onModel);
   $("calibrate").addEventListener("change", update);
   for (const id of ["workers", "prior", "softness", "steps", "cal-max"]) $(id).addEventListener("input", update);
@@ -44,7 +43,7 @@ function load(prefs) {
   readRunTiles = chips($("run-tiles"), tiles, tiles);
   readCalCycles = chips($("cal-cycles"), cycles, info.calibration_defaults.cycles);
   readCalTiles = chips($("cal-tiles"), tiles, info.calibration_defaults.tiles);
-  if (!prefs.workers) $("workers").value = info.recommended_workers;
+  $("workers").value = info.recommended_workers || 1;      // every newly browsed experiment starts at the suggestion
   workersHint(info.memory_per_worker_gb, info.recommended_workers);
   onModel();
 }

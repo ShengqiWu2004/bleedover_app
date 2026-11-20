@@ -1,6 +1,6 @@
 // Service worker: caches the app shell so the window opens instantly; data (/api/*) always comes from the server.
 
-const CACHE = "bleedover-shell-v30";
+const CACHE = "bleedover-shell-v39";
 const SHELL = [
   "/", "/static/app.css", "/static/js/main.js", "/static/js/util.js", "/static/js/tabs.js", "/static/js/experiment.js",
   "/static/js/runconfig.js", "/static/js/overview.js", "/static/js/results.js", "/static/js/viewer.js",

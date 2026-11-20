@@ -67,6 +67,11 @@ const CHECK = `(() => {
       if (ctx.measureText(text).width > room + 1) out.push(name(el) + " shows only part of \\"" + text + "\\"");
     }
   }
+  const text = document.querySelector(".statusbar__text"), bar = document.querySelector("#status-progress");
+  if (text && bar && text.getBoundingClientRect().right > bar.getBoundingClientRect().left + 1)
+    out.push(".statusbar__text runs into the progress bar");
+  for (const el of document.querySelectorAll(".statusbar *"))
+    if (shown(el) && el.getBoundingClientRect().bottom > window.innerHeight + 1) out.push(name(el) + " is cut off below the window");
   return [...new Set(out)];
 })()`;
 
@@ -80,6 +85,9 @@ for (const width of widths) {
   await send("Page.navigate", { url });
   await until(`document.readyState === "complete" && !!document.querySelector("#exp-path")`);
   await check(width, "start");
+  await run(`(() => { document.querySelector("#status-stage").textContent = "Report built · 261026_103922_correct_20250228_qc_experiment_qc2_slope";
+    document.querySelector("#status-detail").textContent = "Report ready in the Results tab."; return 1; })()`);
+  await check(width, "status bar with a long run name");
   await run(`(() => { const i = document.querySelector("#exp-path"); i.value = ${JSON.stringify(experiment)};
     i.dispatchEvent(new Event("change")); return 1; })()`);
   if (!(await until(`!document.querySelector("#layout").hidden`, 60000))) { problems.push(`${width}px: experiment didn't load`); continue; }
@@ -106,12 +114,14 @@ for (const width of widths) {
   if (await until(`!!document.querySelector("#viewer-crop")?.getAttribute("src")`, 90000)) await check(width, "Image viewer");
 
   for (const [button, dialog, close] of [["#system", "#system-dialog", "#system-close"], ["#clean", "#clean-dialog", "#clean-close"],
-                                         ["#help", "#help-dialog", "#help-close"]]) {
-    await run(`document.querySelector("${button}").click(), 1`);
-    await until(`document.querySelector("${dialog}").open && !document.querySelector("${dialog}").textContent.includes("…")`, 10000);
+                                         ["#help", "#help-dialog", "#help-close"],
+                                         ['[data-opens="model-help"]', "#model-help", "#model-help [data-closes]"],
+                                         ['[data-opens="correct-help"]', "#correct-help", "#correct-help [data-closes]"]]) {
+    await run(`document.querySelector('${button}').click(), 1`);
+    await until(`document.querySelector("${dialog}").open && !document.querySelector("${dialog}").textContent.includes("…") && [...document.querySelectorAll("${dialog} img")].every((i) => i.complete)`, 10000);
     await sleep(800);
     await check(width, `dialog ${dialog}`);
-    await run(`document.querySelector("${close}").click(), 1`);
+    await run(`document.querySelector('${close}').click(), 1`);
   }
 }
 

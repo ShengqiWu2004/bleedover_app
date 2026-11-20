@@ -7,7 +7,7 @@ can't write inside its own bundle, so its runs go to
 ``~/Documents/Bleedover Corrector/runs/`` instead. The app's own report goes in
 ``<run>/app_report/``.
 
-Preferences (FASTQ library path, last folder, workers, ...) live in a JSON file
+Preferences (FASTQ library path, last folder, image model, ...) live in a JSON file
 in the user's application-data folder, not in the repo.
 """
 
@@ -30,7 +30,6 @@ DEFAULT_PREFS = {
     "fastq_mode": "experiment",   # "experiment": <experiment>/fastq; "library": match the flowcell ID in a library
     "fastq_library": "",
     "last_dir": "",
-    "workers": None,              # None: the recommended number for this computer
     "run_folders": [],            # extra folders holding correction runs (e.g. the repo's results/)
     "renderer": "voronoi",
 }

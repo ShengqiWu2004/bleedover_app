@@ -121,7 +121,8 @@ Mac's memory.
    The ⚙ *System* button lists the saved calibrations and lets you delete
    them; the built-in models and their calibrations can't be deleted.
 4. **Correction.** Choose the image model (Voronoi or additive), the number of
-   workers, and optionally cycles, tiles, prior, softness and steps. Only
+   workers (each newly opened experiment starts at the suggested number for
+   this computer and that experiment's density), and optionally cycles, tiles, prior, softness and steps. Only
    aligned tiles are run. The estimate comes from your earlier runs
    (`results/*/summary.csv`) and is scaled by cluster density. Memory per worker
    is shown, and you're warned when the workers won't fit.
@@ -210,7 +211,7 @@ replicates, mean, median and normalized SD for both versions.
 | Your saved calibrations | `~/Library/Application Support/BleedoverCorrector/calibrations.json` |
 | Library set up per experiment | `~/Library/Application Support/BleedoverCorrector/libraries.json` |
 | Library analysis of a run | `<run>/app_report/library/` |
-| Preferences (FASTQ library, last folder, workers, image model, extra run folders) | `~/Library/Application Support/BleedoverCorrector/preferences.json` |
+| Preferences (FASTQ library, last folder, image model, extra run folders) | `~/Library/Application Support/BleedoverCorrector/preferences.json` |
 
 ## Code layout
 

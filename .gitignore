@@ -1,6 +1,7 @@
 # The repo's top-level .gitignore skips *.md and *.png; the app needs its docs and icons, so keep them here.
 !*.md
 !static/icons/*.png
+!static/help/*.png
 
 __pycache__/
 .DS_Store

@@ -23,6 +23,9 @@ export function initStatus() {
   $("status-log").addEventListener("click", () => { $("log-dialog").showModal(); scrollLog(); });
   $("log-close").addEventListener("click", () => $("log-dialog").close());
   bus.on("job-started", render);
+  // The bar grows when its text wraps; keep the page's bottom padding equal to its height so nothing hides under it.
+  const bar = document.querySelector(".statusbar");
+  new ResizeObserver(() => document.documentElement.style.setProperty("--statusbar-h", `${bar.offsetHeight}px`)).observe(bar);
 }
 
 function scrollLog() {
@@ -59,8 +62,9 @@ function render(job) {
     progress.value = (index + within) / n;
     $("status-time").textContent = `${job.eta_seconds != null ? `≈ ${fmt.duration(job.eta_seconds)} left · ` : ""}${fmt.duration(job.elapsed_seconds)} elapsed`;
   } else {
-    const label = { done: "Finished", failed: "Failed", cancelled: "Cancelled" }[job.status] || job.status;
-    $("status-stage").textContent = `${label}: ${job.experiment || ""}`;
+    const done = { correct: "Correction finished", report: "Report built", library: "Library analysis finished" }[job.kind] || "Finished";
+    const label = { done, failed: "Failed", cancelled: "Cancelled" }[job.status] || job.status;
+    $("status-stage").textContent = job.experiment ? `${label} · ${job.experiment}` : label;
     $("status-detail").textContent = job.status === "failed" ? job.error || "" : job.status === "done" ? "Report ready in the Results tab." : "Images corrected so far are kept; resume it from Results.";
     $("status-time").textContent = `took ${fmt.duration(job.elapsed_seconds)}`;
     progress.value = job.status === "done" ? 1 : progress.value;

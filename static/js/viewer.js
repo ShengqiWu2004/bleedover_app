@@ -40,9 +40,9 @@ async function setup() {
     try { ({ images } = await get("/api/run/images", { run: run.run })); } catch { images = []; }
   }
   const has = images.length > 0;
-  $("viewer").hidden = !has;
-  $("viewer-empty").hidden = has;
-  $("viewer-empty").textContent = run ? "This run hasn't corrected any image yet." : "Choose an experiment with a correction run to look at corrected images.";
+  idle(!has, !run ? "No correction run yet. Run one, or choose a run in Results, to look at corrected images here."
+    : run.status === "running" ? "No image corrected yet. The first one appears here as soon as it's done."
+    : "This run stopped before any image was corrected.");
   if (!has) return;
   const previous = $("viewer-cycle").value;
   const cycles = [...new Set(images.map((i) => i.cycle))].sort(natural);
@@ -50,6 +50,23 @@ async function setup() {
   $("viewer-cycle").value = cycles.includes(previous) ? previous : cycles[cycles.length - 1];
   fillTiles();
   $("viewer-overview").removeAttribute("src");
+}
+
+/** Grey placeholder in the viewer's own layout (no empty menus) while there's nothing to show. */
+function idle(on, message) {
+  $("panel-viewer").classList.toggle("is-idle", on);
+  $("viewer-empty").textContent = on ? message : "";
+  for (const id of ["viewer-cycle", "viewer-tile"]) {
+    $(id).disabled = on;
+    if (on) $(id).replaceChildren(h("option", {}, "–"));
+  }
+  for (const r of document.querySelectorAll('input[name="viewer-size"]')) r.disabled = on;
+  if (on) {
+    $("viewer-overview").removeAttribute("src");
+    $("viewer-crop").removeAttribute("src");
+    $("viewer-box").hidden = true;
+    $("viewer-stats").replaceChildren();
+  }
 }
 
 function fillTiles() {

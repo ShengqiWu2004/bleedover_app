@@ -31,12 +31,11 @@
   <section class="expbar" aria-label="Experiment">
     <div class="expbar__row">
       <label class="expbar__label" for="exp-path">Experiment</label>
-      <input id="exp-path" type="text" placeholder="Choose an experiment folder (with _metadata.csv, exp_details.txt, ptirf/)" spellcheck="false" autocomplete="off">
+      <input id="exp-path" type="text" placeholder="Choose an experiment folder (MAPA output with ptirf/)" spellcheck="false" autocomplete="off">
       <button class="btn btn--filled" id="exp-browse" type="button">Browse…</button>
     </div>
     <div class="expbar__status">
       <ul class="checks" id="exp-checks" aria-label="Folder contents"></ul>
-      <p class="summary" id="exp-summary"></p>
     </div>
     <ul class="problems" id="exp-problems"></ul>
   </section>
@@ -65,8 +64,8 @@
       </section>
 
       <section class="card" aria-labelledby="h-model" id="card-model" hidden>
-        <h2 id="h-model"><span class="step">2</span>Model</h2>
-        <label class="label" for="model">Point-spread function (how one cluster's light spreads)</label>
+        <h2 id="h-model"><span class="step">2</span>Model<button class="qhelp" type="button" data-opens="model-help" aria-label="What is the model?" title="What is the model?">?</button></h2>
+        <label class="sr-only" for="model">Model</label>
         <select id="model"></select>
         <div class="status-line" id="model-status"></div>
         <label class="check"><input type="checkbox" id="calibrate"> Calibrate on this experiment first</label>
@@ -99,13 +98,11 @@
       </section>
 
       <section class="card" aria-labelledby="h-correct" id="card-correct" hidden>
-        <h2 id="h-correct"><span class="step">4</span>Correction</h2>
+        <h2 id="h-correct"><span class="step">4</span>Correction<button class="qhelp" type="button" data-opens="correct-help" aria-label="What is Voronoi vs additive?" title="What is Voronoi vs additive?">?</button></h2>
         <fieldset class="options" id="renderer">
-          <legend class="label">How neighbouring clusters share light</legend>
-          <label><input type="radio" name="renderer" value="voronoi">
-            <span><strong>Voronoi</strong> · colonies split the surface; crowded clusters are cut at their boundary. Faster, recommended for dense flowcells.</span></label>
-          <label><input type="radio" name="renderer" value="additive">
-            <span><strong>Additive</strong> · every cluster's light spreads fully and adds up.</span></label>
+          <legend class="sr-only">Image model</legend>
+          <label><input type="radio" name="renderer" value="voronoi"><span><strong>Voronoi</strong></span></label>
+          <label><input type="radio" name="renderer" value="additive"><span><strong>Additive</strong></span></label>
         </fieldset>
         <div class="field-row field-row--compact">
           <label for="workers">Workers</label>
@@ -155,7 +152,7 @@
         <div id="results"><p class="empty">No correction run for this experiment yet.</p></div>
       </div>
 
-      <div class="panel" role="tabpanel" id="panel-viewer" aria-labelledby="tab-viewer" hidden>
+      <div class="panel is-idle" role="tabpanel" id="panel-viewer" aria-labelledby="tab-viewer" hidden>
         <p class="hint" id="viewer-run"></p>
         <div class="field-row field-row--compact viewer-controls">
           <label for="viewer-cycle">Cycle</label><select id="viewer-cycle"></select>
@@ -179,10 +176,10 @@
           <div class="viewer__detail">
             <dl class="stats" id="viewer-stats"></dl>
             <img id="viewer-crop" alt="" width="1100" height="760">
+            <div class="viewer__idle" id="viewer-idle"><p id="viewer-empty">No correction run yet. Run one, or choose a run in Results, to look at corrected images here.</p></div>
             <p class="caption">Top: the real image and the image simulated from the original (Feather) and corrected intensities, on one brightness scale. Bottom: each cluster's change (blue: lost light) and the residual, real minus simulated (red: the real image is brighter). Good correction leaves a flat, grey residual.</p>
           </div>
         </div>
-        <p class="empty" id="viewer-empty">Finish or open a run to look at corrected images.</p>
       </div>
     </section>
   </main>
@@ -219,6 +216,46 @@
       </dl>
       <h3>What a folder needs</h3>
       <p><code>_metadata.csv</code>, <code>exp_details.txt</code> (with <code>Flowcell ID:</code>) and <code>ptirf/</code>, plus MAPA's <code>analysis/img_transformations/</code> and <code>img_results/results.feather</code>. <code>alignment_matrix.json</code> is optional; it tells the report which samples should glow.</p>
+    </div>
+  </dialog>
+
+  <dialog class="sheet help" id="model-help" aria-labelledby="model-help-title">
+    <header><h2 id="model-help-title">The model: how one cluster's light spreads</h2><button class="btn btn--text" type="button" data-closes>Close</button></header>
+    <div class="sheet__body explain">
+      <figure class="explain__figure explain__figure--psf">
+        <img src="/static/help/psf.png" alt="The point-spread function: a bright centre pixel fading over about three pixels in every direction" width="160" height="160">
+        <figcaption>One cluster of typical brightness on the camera's pixels, as the Standard model draws it.</figcaption>
+      </figure>
+      <div class="explain__text">
+        <p>A cluster's light doesn't stay in one pixel. It spreads into a small spot, the <strong>point-spread function (PSF)</strong>: a Gaussian about 1.4–1.65 px wide, a little wider for brighter clusters. The centre pixel gets about 7% of the light and the 3 × 3 block about half. The rest reaches the neighbours, and that is bleedover.</p>
+        <p><strong>Standard</strong>: learned from isolated clusters on five experiments. Use it.<br>
+           <strong>Cross-check</strong>: learned from QC flowcells only. Run it to see whether a result depends on the PSF.</p>
+        <p><strong>Calibrate</strong> converts this experiment's RFU into light (<code>counts = gain × RFU + offset</code>). Tick it when the model has no calibration for the experiment yet.</p>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="sheet help" id="correct-help" aria-labelledby="correct-help-title">
+    <header><h2 id="correct-help-title">Correction: Voronoi or additive</h2><button class="btn btn--text" type="button" data-closes>Close</button></header>
+    <div class="sheet__body">
+      <p>The correction redraws each image from every cluster's PSF, then adjusts each cluster's brightness until the drawing matches the real image. The image model decides what happens where clusters overlap:</p>
+      <div class="explain__pair">
+        <figure class="explain__figure">
+          <img src="/static/help/footprints.png" alt="Real clusters with a circle around each one's light; the circles overlap heavily" width="492" height="492">
+          <figcaption><strong>Additive</strong>: each cluster's light spreads over its circle (2σ, ~86% of its light). Where circles overlap, the light adds up. Fits the image more closely.</figcaption>
+        </figure>
+        <figure class="explain__figure">
+          <img src="/static/help/territory.png" alt="The same clusters, each owning one cell of a Voronoi diagram; no overlap" width="492" height="492">
+          <figcaption><strong>Voronoi</strong> (default): each pixel belongs to its nearest cluster, so crowded clusters split the surface. About 1.7× faster per image.</figcaption>
+        </figure>
+      </div>
+      <p class="explain__note">Grey: a real 32 px window. Orange: cluster centres. Cyan: the light circle (left) or territory (right).</p>
+      <figure class="explain__figure">
+        <img src="/static/help/renderers.png" alt="The same crop three ways: the real image; the additive simulation, smooth; the Voronoi simulation, patchier" width="1116" height="362">
+        <div class="explain__labels"><span>Real image</span><span>Additive · R² 0.89</span><span>Voronoi · R² 0.80</span></div>
+        <figcaption>One 64 px crop of <code>20261018_qc_perct</code> (cycle img_10, tile 2112), redrawn after correction. On all 78 images of that experiment, additive matched better (median R² 0.88 vs 0.82).</figcaption>
+      </figure>
+      <p><strong>Workers</strong>: images corrected at once. Each needs about 5 GB of memory.</p>
     </div>
   </dialog>
 

@@ -77,13 +77,12 @@ function choose(path) {
 export async function open(path) {
   if (!path) return;
   $("exp-path").value = path;
-  $("exp-summary").textContent = "Reading the folder…";
-  $("exp-checks").replaceChildren();
+  $("exp-checks").replaceChildren(h("li", { class: "hint" }, "Reading the folder…"));
   $("exp-problems").replaceChildren();
   try {
     current = await post("/api/inspect", { path });
   } catch (error) {
-    $("exp-summary").textContent = "";
+    $("exp-checks").replaceChildren();
     $("exp-problems").replaceChildren(h("li", {}, error.message));
     $("layout").hidden = true;
     bus.emit("experiment", null);
@@ -106,10 +105,6 @@ function renderChecks(info) {
     items.push(h("li", {}, badge(info.alignment_matrix ? "good" : "warn", "alignment_matrix.json")));
   }
   $("exp-checks").replaceChildren(...items);
-  const id = info.details.flowcell_id;
-  $("exp-summary").textContent = info.cycles
-    ? `${info.cycles.length} cycles · ${info.feather.rows.toLocaleString()} clusters · flowcell ${id || (info.details.file ? "not in exp_details.txt" : "unknown")}`
-    : "";
   $("exp-problems").replaceChildren(...info.problems.map((p) => h("li", {}, p)),
     ...(info.notes || []).map((n) => h("li", { class: "note" }, n)));
   $("appbar-exp").textContent = info.name;

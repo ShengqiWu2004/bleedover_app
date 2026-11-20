@@ -64,7 +64,8 @@ def inspect(body: dict) -> dict:
     if "cycles" in info:
         info["calibration_defaults"] = calibration_defaults(info)
         renderer = prefs.load()["renderer"]
-        info["recommended_workers"] = timing.recommended_workers(info["clusters_per_tile"], renderer)
+        dense = info["clusters_per_tile"]        # 0 without results.feather: no basis for a suggestion
+        info["recommended_workers"] = timing.recommended_workers(dense, renderer) if dense else None
         info["memory_per_worker_gb"] = round(timing.memory_per_worker_gb(info["clusters_per_tile"], renderer), 1)
     info["models"] = list_models(info["name"])
     info["fastq"] = resolve_fastq({"path": info["path"]})
@@ -135,7 +136,7 @@ def run(body: dict) -> dict:
     calibrated = next(m for m in list_models(info["name"]) if m["id"] == model_id)["calibration"]
     if not calibrate["enabled"] and not calibrated:
         raise ValueError("This model has no calibration for this experiment yet. Tick Calibrate first.")
-    prefs.update({"workers": int(options["workers"]), "renderer": options["renderer"]})
+    prefs.update({"renderer": options["renderer"]})
     resuming = body.get("resume_run")
     if resuming:
         run_dir = run_folder(resuming)
@@ -168,7 +169,8 @@ def run(body: dict) -> dict:
 
 def build_report(body: dict) -> dict:
     run_dir = run_folder(body["run"])
-    return jobs.start({"kind": "report", "experiment": run_dir.name, "run_dir": str(run_dir)}, {})
+    experiment = next((p.parent.name for p in sorted(run_dir.glob("*/summary.csv"))), run_dir.name)
+    return jobs.start({"kind": "report", "experiment": experiment, "run_dir": str(run_dir)}, {})
 
 
 def library_get(query: dict) -> dict:

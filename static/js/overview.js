@@ -22,21 +22,17 @@ function render(info) {
         h("dt", {}, "Performed by"), h("dd", {}, info.person || "–"),
         h("dt", {}, "Flowcell"), h("dd", {}, d.flowcell_id || (d.file ? "not in exp_details.txt" : "– (no exp_details.txt)")),
         h("dt", {}, "Channel"), h("dd", {}, info.channel || "–"),
+        h("dt", {}, "Cycles"), h("dd", {}, info.cycles ? `${info.cycles.length} (${fmt.int(info.images_aligned)} of ${fmt.int(info.images_total)} images aligned)` : "–"),
         h("dt", {}, "Clusters"), h("dd", {}, info.feather ? `${fmt.int(info.feather.rows)} (≈${fmt.int(info.clusters_per_tile)} per tile)` : "–")),
       d.notes ? h("div", { class: "notes", "aria-label": "Notes from exp_details.txt" }, d.notes) : null),
   ];
   if (info.cycles) {
     parts.push(h("section", { class: "section" },
       h("h3", {}, "Samples on the flowcell"),
-      h("p", {}, "Each sequencing sample (FASTQ) is one kind of cluster. ",
-        "‘Should glow’ comes from alignment_matrix.json, per cycle type. A sample that shouldn't glow is a built-in control: ",
-        "any RFU it shows is light from neighbours (bleedover) or background, so correction should bring it toward zero light. ",
-        "The matrix lists the samples MAPA aligned on, so check it against your dye design."),
       h("div", { id: "samples" }, h("p", { class: "hint" }, info.feather?.exists
         ? "Counting clusters per sample…" : "No img_results/results.feather yet: samples appear after MAPA's intensity extraction."))));
     parts.push(h("section", { class: "section" },
       h("h3", {}, "Cycles"),
-      h("p", {}, "A tile can be corrected only where MAPA aligned it (a registration transform exists)."),
       h("div", { class: "table-wrap" }, table(
         [{ key: "cycle", label: "Cycle" }, { key: "folder", label: "Image folder" }, { key: "type", label: "Type" },
          { key: "aligned_tiles", label: "Aligned tiles", format: (v) => `${v.length} of ${info.device_tiles.length}` }],
