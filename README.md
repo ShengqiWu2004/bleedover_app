@@ -14,7 +14,8 @@ show up in the app.
 Step-by-step guide for the people you share it with: [INSTALL.md](INSTALL.md).
 The `.dmg` contains the same guide as *Read me first (install).md*.
 
-Share `packaging/dist/BleedoverCorrector-arm64.dmg` (~105 MB). The person
+Download the `.dmg` from the [latest release](https://github.com/ShengqiWu2004/bleedover_app/releases/latest),
+or share your own build, `packaging/dist/BleedoverCorrector-arm64.dmg` (~110 MB). The person
 receiving it:
 
 1. Opens the `.dmg` and drags **Bleedover Corrector** to Applications.
